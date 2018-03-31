@@ -39,15 +39,53 @@ void loop()
   while(client.available()) // TCP流连接是否可以获取数据
   {
     // TCP逐字节读取
-    uint8_t c = client.read();
-    Serial.write(c);
+    String recv = CreadLine();
+    Serial.print(recv);
+    //uint8_t c = client.read();
+    //Serial.write(c);
   }
 
+  
+  /*
   if(Serial.available()){
     size_t counti = Serial.available();
     uint8_t sbuf[counti];
     Serial.readBytes(sbuf, counti);
     client.write(sbuf, counti);
   }
+  */
+  if(Serial.available()){
+    String recv = SreadLine();
+    client.print(recv);
+  }
 }
 
+// 从Serial中读取一条信息或一行信息,不包含换行符'\n' 和 回车符 '\r'
+String SreadLine()
+{
+	String str = "";
+	while(Serial.available()){
+		char temp = Serial.read();
+		if(temp != '\n' && temp != '\r'){
+			str += char(temp);
+			delay(2);
+		}
+		else break;
+	}
+	return str;
+}
+
+// 从client中读取一条信息或一行信息,不包含换行符'\n' 和 回车符 '\r'
+String CreadLine()
+{
+  String str = "";
+  while(client.available()){
+    char temp = client.read();
+    if(temp != '\n' && temp != '\r'){
+      str += char(temp);
+      delay(2);
+    }
+    else break;
+  }
+  return str;
+}

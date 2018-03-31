@@ -5,8 +5,7 @@ import socket
 
 # 声明套接字对象
 s = socket.socket()
-host = socket.gethostname()
-host = "192.168.2.104"
+host = ""
 port = 1234
 # 绑定端口
 s.bind((host, port))

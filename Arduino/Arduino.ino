@@ -26,15 +26,24 @@ void loop()
 {
   //　软串口读取
   if(SWSerial.available()){
+    Serial.println(SWreadLine());
+        /*
   	String recv = SWreadLine();
+    Serial.print(recv + " : ");
+
     if(recv == "a"){
        digitalWrite(ledPin, HIGH);
-	   Serial.println("LED ON");
+	     Serial.println("LED ON");
 	  }
     else if(recv == "b"){
        digitalWrite(ledPin, LOW);
-	   Serial.println("LED OFF");
+	     Serial.println("LED OFF");
 	  }
+    else{
+       Serial.println("Nothing");
+        
+    }
+   */
   /*
 	// 接受第一个字符
    // Serial.println("your command is:");
@@ -68,34 +77,28 @@ void loop()
     SWSerial.print(SreadLine());
 }
 
-// 从Serial读入一行信息或一条信息, 不包含换行符'\n' 和 回车符'\r'
+// 从Serial读入一条信息
 String SreadLine()
 {
   String str;
   while(Serial.available())
   {
     char ch = Serial.read();
-    if(ch != '\n'){
-      str += char(ch);
-      delay(2);
-    }
-    else break;
+    str += char(ch);
+    delay(2);
   }
   return str;
 }
 
-// 从软串口读入一行信息或一条信息, 不包含换行符'\n' 和 回车符'\r'
+// 从软串口读入一条信息
 String SWreadLine()
 {
   String str;
   while(SWSerial.available())
   {
     char ch = SWSerial.read();
-    if(ch != '\n'){
-      str += char(ch);
-      delay(2);
-    }
-    else break;
+    str += char(ch);
+    delay(2);
   }
   return str;
 }

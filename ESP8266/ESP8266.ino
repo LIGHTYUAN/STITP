@@ -3,10 +3,12 @@
 #define led 2
 const char *ssid  = "DKY_FATHER";
 const char *password = "139256478";
+// const char *host = "192.168.2.104";
 const char *host = "192.168.2.104";
 
 WiFiClient client;
-const int tcpPort = 1234;
+// const int tcpPort = 1234;
+const int tcpPort = 80;
 
 void setup()
 {
@@ -21,26 +23,33 @@ void setup()
   
   // 检测是否成功连接ＷＩＦＩ
   while(WiFi.status() != WL_CONNECTED){
-    delay(100);
+    Serial.println("WIFI Connecting...");
+    delay(1000);
   }
+  Serial.print("Success to connect WIFI: ");
+  Serial.println(ssid);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 
 void loop()
 {
   // TCP 数据流是否建立
-  while(!client.connected()) 
+  while(!client.connected())
   {
     if(!client.connect(host, tcpPort)){
+      Serial.println("TCP Connecting...");
       delay(500);
+    }else{
+      Serial.println("TCP connected.");
     }
   }
-
-  // 透传数据
+  // 透传数据 PC - > Arduino
   while(client.available()) // TCP流连接是否可以获取数据
   {
     // TCP逐字节读取
     String recv = CreadLine();
-    Serial.print(recv);
+    Serial.print(recv+'\n');
     //uint8_t c = client.read();
     //Serial.write(c);
   }
@@ -54,38 +63,47 @@ void loop()
     client.write(sbuf, counti);
   }
   */
+  // Arduino -> PC
   if(Serial.available()){
     String recv = SreadLine();
-    client.print(recv);
+
+    String data = (String)"first=" + recv;  
+    int length = data.length();  
+        
+    String postRequest =
+          (String)("POST ") + "/POST.php HTTP/1.1\r\n" +  
+          "Host: " + host + ":" + tcpPort + "\r\n" +               
+          "Connection: keep-alive\r\n" +  
+          "Content-Length: " + length + "\r\n" +  
+          "Content-Type: application/x-www-form-urlencoded\r\n\r\n" +  
+          data;  
+    Serial.println(postRequest); 
+    
+    //client.print(recv);
+    client.print(postRequest);
   }
 }
 
-// 从Serial中读取一条信息或一行信息,不包含换行符'\n' 和 回车符 '\r'
+// 从Serial中读取一条信息
 String SreadLine()
 {
 	String str = "";
 	while(Serial.available()){
-		char temp = Serial.read();
-		if(temp != '\n' && temp != '\r'){
-			str += char(temp);
-			delay(2);
-		}
-		else break;
+		char temp = Serial.read();		
+		str += char(temp);
+		delay(2);
 	}
 	return str;
 }
 
-// 从client中读取一条信息或一行信息,不包含换行符'\n' 和 回车符 '\r'
+// 从client中读取一条信息
 String CreadLine()
 {
   String str = "";
   while(client.available()){
     char temp = client.read();
-    if(temp != '\n' && temp != '\r'){
-      str += char(temp);
-      delay(2);
-    }
-    else break;
+    str += char(temp);
+    delay(2);
   }
   return str;
 }

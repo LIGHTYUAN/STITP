@@ -4,7 +4,8 @@
 const char *ssid  = "DKY_FATHER";
 const char *password = "139256478";
 // const char *host = "192.168.2.104";
-const char *host = "172.96.226.237";
+// const char *host = "172.96.226.237"; 
+const char *host = "192.168.2.201";
 
 WiFiClient client;
 // const int tcpPort = 1234;
@@ -79,7 +80,7 @@ void loop()
     int length = data.length();  
         
     String postRequest =
-          (String)("POST ") + "/esppost.php HTTP/1.1\r\n" +  
+          (String)("POST ") + "/POST.php HTTP/1.1\r\n" +  
           "Host: " + host + ":" + tcpPort + "\r\n" +               
           "Connection: keep-alive\r\n" +  
           "Content-Length: " + length + "\r\n" +  

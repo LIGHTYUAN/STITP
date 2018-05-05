@@ -1,15 +1,22 @@
+#include <AltSoftSerial.h>
+
 #include <DHT.h>
 #include <DHT_U.h>
 
 #include <SoftwareSerial.h>
 
-#define DHTPIN 2
+#define DHTPIN 7
 #define DHTTYPE DHT22
+// LCD AT 0x3F
+int LCD = 0x3F;
+// BMP180 AT 0x77
+int BMP = 0x77;
 
 // LED 控制口Pin10
 // int ledPin = 10;
 // 声明软串口rx=6, tx=7
-SoftwareSerial SWSerial(6, 7);
+SoftwareSerial SWSerial(5, 6);
+AltSoftSerial GSMSerial;
 // 声明DHT对象
 DHT dht(DHTPIN, DHTTYPE);
 // olddata

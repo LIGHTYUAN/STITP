@@ -5,12 +5,25 @@
 #include <Wire.h>
 #include <BH1750.h>
 #include <Adafruit_BMP085.h>
+#include <AltSoftSerial.h>
+#define NOP do{__asm__ __volatile__("nop");}while(0)
+// G203
+int buttonpin = 2;
+int LED = LED_BUILTIN;
+int val;
+
+// lcd 显示函数声明
 void lcd_disp(String msg, const int col=0, const int raw=0);
+
+//GSM
+// GSM软串口
+AltSoftSerial GSMSerial;
 
 // 光感
 BH1750 lightMeter;
 uint16_t lux = 0;
 
+// DHT
 #define DHTPIN 7 // 数据接受端口
 #define DHTTYPE DHT22 // 定义传感器型号
 
@@ -26,7 +39,7 @@ float pre = 0.0;
 float alt = 0.0;
 float t2 = 0.0;
 
-
+// PM2.5
 // PM端口设置
 int measurePin = A0;            
 int ledPower = 12;              
@@ -46,24 +59,51 @@ LiquidCrystal_I2C lcd(0x3F, 16, 2);
 // ESP
 SoftwareSerial SWSerial(5, 6);
 
+// timer1
+int timer1_counter;  
+
+#define RST 13　// GSM 重启端口
 void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-  SWSerial.begin(115200);
-  lcd_init();
-  dht.begin();
-  bmp.begin();
-  lightMeter.begin();
+  lcd_init(); // lcd 初始化
   lcd.clear();
-  PM_init();
   lcd_disp("Hello, world");
-  delay(3000);
+  lcd_disp("INITING...", 0, 1);
+
+  Serial.begin(9600); // 测试输出串口初始化 
+  SWSerial.begin(115200); // Esp 串口初始化
+  GSMSerial.begin(115200); // GSM 串口初始化
+
+  dht.begin(); // dht 初始化
+  bmp.begin(); // bmp 初始化
+  lightMeter.begin(); // 光强传感器初始化
+  PM_init(); // PM2.5 初始化
+   // pinMode(13, OUTPUT);
+  //digitalWrite(13, LOW);
+  
+  // G203初始化
+  pinMode(LED, OUTPUT);
+  pinMode(buttonpin, INPUT);
+
+  isStartedA6();  // GSM 初始化
+
+/*
+  // timer1初始化
+  noInterrupts();  
+  TCCR1A = 0;  
+  TCCR1B = 0;  
+  //timer1_counter = 65536-(62500*0.5);  //0.5s 定时器中断  
+  timer1_counter = 34286;  //预加载timer1 65536-16Mhz/256/2Hz  
+  TCNT1 = timer1_counter;  
+  TCCR1B |= (1 << CS12);  
+  TIMSK1 |= (1<< TOIE1);  
+  interrupts();
+*/
 }
 
-void loop() {
+void loop() {    
   // 显示ＤＨＴ
-  delay(3000);
-  
+  delay(1000);
+  detect(); 
   // 获取温度　湿度
   h = dht.readHumidity();
   t1 = dht.readTemperature();
@@ -82,10 +122,12 @@ void loop() {
   digitalWrite(ledPower,HIGH);
   delayMicroseconds(sleepTime);
   delay(1000);
+    detect(); 
   if(voMeasured > 36.455){
     Air = (float(voMeasured/1024)-0.0356)*120000*0.035;
   }
-  delay(3000);
+  delay(1000);
+    detect();
   lcd.clear();
   // 显示PM 光强
   lcd_disp((String)("PM2.5: ") + Air);
@@ -95,15 +137,18 @@ void loop() {
   pre = bmp.readPressure();
   alt = bmp.readAltitude();
   t2 = bmp.readTemperature();
-  delay(3000);
+  delay(1000);
+    detect();
+  delay(1000);
+    detect();
   lcd.clear();
   // 显示气压　海拔
   lcd_disp((String)("Alt: ") + alt +" m");
   lcd_disp((String)("Pre: ") + pre + " Pa", 0, 1);
 
-  
   // esp 发送实时数据
   esp_loop();
+    detect(); 
 }
 
 // 初始化
@@ -155,18 +200,6 @@ void bmp_init()
   }
 }
 
-// 从Serial读入一条信息
-String SreadLine()
-{
-  String str;
-  while(Serial.available())
-  {
-    char ch = Serial.read();
-    str += char(ch);
-    delay(2);
-  }
-  return str;
-}
 
 // 从软串口读入一条信息
 String SWreadLine()
@@ -201,6 +234,121 @@ void esp_loop()
 
   if(SWSerial.available()){
     Serial.println(SWreadLine());
+  }
+}
+
+// 完成GSM模块的启动
+void isStartedA6()
+{
+  String msg="";
+  while (true){
+    msg = GSMreadLine();
+    if(msg.endsWith("+CREG: 1\r\n")){
+      Serial.println("Started");
+       break;     
+    }
+  }
+}
+
+// GSM 串口读取
+String GSMreadLine()
+{
+  String str=":";
+  while(GSMSerial.available())
+  {
+    char ch = GSMSerial.read();
+    str += char(ch);
+    delay(2);
+  }
+  return str;
+}
+
+// 从Serial读入一条信息
+String SreadLine()
+{
+  String str;
+  while(Serial.available())
+  {
+    char ch = Serial.read();
+    str += char(ch);
+    delay(2);
+  }
+  return str;
+}
+
+// 是否准备好
+bool isReady()
+{
+  while(GSMSerial.available()){
+    String result = GSMreadLine();
+    if(result.endsWith("OK\r\n"))
+      return true;
+  }
+  return false;
+}
+
+// 发送信息
+void sendMsg()
+{
+  while(true){
+    GSMSerial.print("AT\r\n");
+    delay(200);
+    if(isReady()){
+      Serial.println("Ready");
+      break;
+    }
+    else
+      Serial.println("Not Ready");
+    delay(1000);
+  }
+  delay(200);
+  GSMSerial.print("AT+CMGS=\"13218992786\"\r");
+  delay(200);
+  // Serial.print(GSMreadLine());
+  // delay(200);
+  GSMSerial.print("Fire!");
+  delay(200);
+  GSMSerial.print("\x1a");
+  // Serial.print(GSMreadLine());
+  // delay(200);
+  // Serial.print(GSMreadLine());
+}
+
+void Blink()
+{
+  for(int i=0; i<5; i++){
+    digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+    delay(1000);                       // wait for a second
+    digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+    delay(1000);   
+  }
+}
+
+void detect()
+{
+  val = digitalRead(buttonpin);
+  if(val == LOW){   
+    // Blink();
+    delay(3000);
+    sendMsg();
+  }else{
+    digitalWrite(LED, LOW);
+  }
+}
+
+/*
+ISR(TIMER1_OVF_vect) {  
+  // TCNT1 = timer1_counter; 
+  // sendMsg();
+  detect();
+  TCNT1 = timer1_counter; 
+}
+*/
+
+void delay2(int ms)
+{
+  for(int i=0; i<ms; i++){
+    for(unsigned long  j = 0; j<1085; j++) NOP;
   }
 }
 

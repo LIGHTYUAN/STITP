@@ -1,5 +1,6 @@
 #include <AltSoftSerial.h>
 #define RST 13
+// GSM软串口
 AltSoftSerial GSMSerial;
 
 void setup() {

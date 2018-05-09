@@ -1,11 +1,11 @@
 #include <ESP8266WiFi.h>
-
 #define led 2
-const char *ssid  = "DKY_FATHER";
+// const char *ssid  = "DKY_FATHER";
+const char *ssid = "LIGHTYUAN";
 const char *password = "139256478";
 // const char *host = "192.168.2.104";
 // const char *host = "172.96.226.237"; 
-const char *host = "192.168.2.201";
+const char *host = "192.168.43.189";
 
 WiFiClient client;
 // const int tcpPort = 1234;

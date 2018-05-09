@@ -10,7 +10,8 @@
 // G203
 int buttonpin = 2;
 int LED = LED_BUILTIN;
-int val;
+int val = 0;
+int cnt = 50;
 
 // lcd 显示函数声明
 void lcd_disp(String msg, const int col=0, const int raw=0);

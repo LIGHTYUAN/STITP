@@ -3,6 +3,8 @@
 // GSM软串口
 AltSoftSerial GSMSerial;
 
+int cnt = 50;
+
 void setup() {
   Serial.begin(9600);
   GSMSerial.begin(115200);
@@ -87,6 +89,24 @@ void sendMsg()
 }
 
 
+// call
+void call()
+{
+  while(true){
+    GSMSerial.print("AT\r\n");
+    delay(200);
+    if(isReady()){
+      Serial.println("Ready");
+      break;
+    }
+    else
+      Serial.println("Not Ready");
+    delay(1000);
+  }
+  delay(200);
+  GSMSerial.print("ATD13218992786\r");
+  delay(200);
+}
 
 // 检测A6是否启动
 void isStartedA6()

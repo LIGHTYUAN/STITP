@@ -163,25 +163,40 @@ void sendMsg()
   // Serial.print(GSMreadLine());
 }
 
-void Blink()
+// call
+void call()
 {
-  for(int i=0; i<5; i++){
-    digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-    delay(1000);                       // wait for a second
-    digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-    delay(1000);   
+  while(true){
+    GSMSerial.print("AT\r\n");
+    delay(200);
+    if(isReady()){
+      Serial.println("Ready");
+      break;
+    }
+    else
+      Serial.println("Not Ready");
+    delay(1000);
   }
+  delay(200);
+  GSMSerial.print("ATD13218992786\r");
+  delay(200);
 }
+
 
 void detect()
 {
+  cnt++;
   val = digitalRead(buttonpin);
-  if(val == LOW){   
+  if(val == LOW && cnt > 50){   
+    cnt = 0;
     // Blink();
     delay(3000);
-    sendMsg();
+    // sendMsg();
+    call();
   }else{
-    digitalWrite(LED, LOW);
+    if(cnt > 50){
+      cnt = 50;
+    }
   }
 }
 
@@ -200,3 +215,4 @@ void delay2(int ms)
     for(unsigned long  j = 0; j<1085; j++) NOP;
   }
 }
+

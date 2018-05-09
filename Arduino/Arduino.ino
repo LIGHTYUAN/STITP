@@ -41,6 +41,7 @@ void loop() {
   // 显示ＤＨＴ
   delay(1000);
   detect(); 
+  
   // 获取温度　湿度
   h = dht.readHumidity();
   t1 = dht.readTemperature();
@@ -58,13 +59,17 @@ void loop() {
   delayMicroseconds(deltaTime);
   digitalWrite(ledPower,HIGH);
   delayMicroseconds(sleepTime);
+  
   delay(1000);
-    detect(); 
+    detect();
+     
   if(voMeasured > 36.455){
     Air = (float(voMeasured/1024)-0.0356)*120000*0.035;
   }
+  
   delay(1000);
     detect();
+    
   lcd.clear();
   // 显示PM 光强
   lcd_disp((String)("PM2.5: ") + Air);
@@ -74,10 +79,12 @@ void loop() {
   pre = bmp.readPressure();
   alt = bmp.readAltitude();
   t2 = bmp.readTemperature();
+  
   delay(1000);
     detect();
   delay(1000);
     detect();
+    
   lcd.clear();
   // 显示气压　海拔
   lcd_disp((String)("Alt: ") + alt +" m");
